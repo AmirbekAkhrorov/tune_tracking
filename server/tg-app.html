@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<title>TUNE · Dashboard</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  :root{
+    --bg:#050A18;--card:rgba(14,20,40,0.85);--border:rgba(56,189,248,0.1);
+    --teal:#38BDF8;--purple:#8B5CF6;--amber:#F59E0B;--green:#34D399;--red:#F87171;
+    --text:rgba(255,255,255,0.85);--muted:rgba(255,255,255,0.35);--mono:'Space Mono',monospace;
+  }
+  html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overflow-x:hidden}
+  body{padding-bottom:32px}
+
+  /* Stars background */
+  #stars{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+  .star{position:absolute;border-radius:50%;background:white}
+  .nebula{position:absolute;border-radius:50%;pointer-events:none}
+
+  .wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 14px}
+
+  /* Header */
+  .header{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:16px 14px 12px;position:sticky;top:0;z-index:10;
+    background:rgba(5,10,24,0.92);backdrop-filter:blur(16px);
+    border-bottom:1px solid var(--border);
+  }
+  .header-logo{display:flex;align-items:center;gap:9px}
+  .logo-title{font-size:14px;font-weight:800;letter-spacing:.5px;line-height:1.1}
+  .logo-sub{font-size:9px;color:rgba(56,189,248,0.45);letter-spacing:1.5px;text-transform:uppercase;margin-top:1px}
+  .live-clock{font-family:var(--mono);font-size:12px;color:var(--teal);background:rgba(56,189,248,0.08);padding:4px 10px;border-radius:8px;border:1px solid rgba(56,189,248,0.18)}
+
+  /* Stats */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:14px 0 2px}
+  .stat-card{
+    background:var(--card);border-radius:12px;border:1px solid var(--border);
+    padding:10px 8px;text-align:center;
+  }
+  .stat-n{font-size:22px;font-weight:800;font-family:var(--mono);line-height:1.1}
+  .stat-l{font-size:9px;color:var(--muted);margin-top:3px;font-weight:600;letter-spacing:.3px}
+
+  /* Section */
+  .section{margin-top:18px}
+  .section-title{
+    font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+    color:rgba(56,189,248,0.4);margin-bottom:10px;
+    display:flex;align-items:center;gap:7px;
+  }
+  .section-title::after{content:'';flex:1;height:1px;background:rgba(56,189,248,0.08)}
+
+  /* Active timers */
+  .active-card{
+    background:rgba(56,189,248,0.05);border:1px solid rgba(56,189,248,0.2);
+    border-radius:12px;padding:12px 14px;margin-bottom:8px;
+    display:flex;align-items:center;gap:12px;
+  }
+  .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--teal);flex-shrink:0;
+    box-shadow:0 0 8px var(--teal);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.8)}}
+  .active-dev-name{font-size:12px;font-weight:700;color:#F1F5F9}
+  .active-task-title{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+  .timer-badge{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--teal);background:rgba(56,189,248,0.1);padding:4px 9px;border-radius:7px;flex-shrink:0}
+
+  /* Developer cards */
+  .dev-card{
+    background:var(--card);border:1px solid var(--border);border-radius:14px;
+    padding:14px;margin-bottom:10px;
+  }
+  .dev-header{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+  .avatar{
+    width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:13px;font-weight:800;color:white;flex-shrink:0;overflow:hidden;
+  }
+  .avatar img{width:100%;height:100%;object-fit:cover}
+  .dev-info{flex:1;min-width:0}
+  .dev-name{font-size:14px;font-weight:700;color:#F1F5F9}
+  .dev-meta{font-size:11px;color:var(--muted);margin-top:1px}
+  .dev-counts{display:flex;gap:10px;font-size:11px;font-family:var(--mono)}
+  .progress-bar{height:3px;background:rgba(255,255,255,0.07);border-radius:4px;overflow:hidden;margin-top:8px}
+  .progress-fill{height:100%;border-radius:4px;transition:width .6s ease}
+
+  .current-task{
+    background:rgba(56,189,248,0.04);border:1px solid rgba(56,189,248,0.12);
+    border-radius:9px;padding:9px 12px;margin-top:8px;
+    display:flex;align-items:flex-start;gap:9px;
+  }
+  .task-status-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;margin-top:4px}
+  .task-title{font-size:12px;font-weight:600;color:#E2E8F0;line-height:1.4}
+  .task-meta{font-size:10px;color:var(--muted);margin-top:2px}
+  .task-timer{font-family:var(--mono);font-size:10px;color:var(--teal);margin-top:3px}
+  .task-started{font-size:10px;color:rgba(139,92,246,0.7);margin-top:2px}
+
+  /* Recent */
+  .recent-item{
+    display:flex;align-items:center;gap:11px;padding:10px 12px;
+    background:var(--card);border:1px solid var(--border);border-radius:10px;margin-bottom:7px;
+  }
+  .ri-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+  .ri-content{flex:1;min-width:0}
+  .ri-title{font-size:12px;font-weight:600;color:#E2E8F0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .ri-meta{font-size:10px;color:var(--muted);margin-top:1px}
+  .ri-badge{font-size:9px;font-weight:700;padding:2px 7px;border-radius:5px;flex-shrink:0;white-space:nowrap}
+
+  .empty{text-align:center;padding:28px;color:var(--muted);font-size:13px}
+  .refresh-note{text-align:center;font-size:10px;color:rgba(255,255,255,0.15);margin-top:18px;font-family:var(--mono)}
+
+  /* Loading */
+  #loading{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+  .spinner{width:28px;height:28px;border:2px solid rgba(56,189,248,.2);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <span style="color:var(--muted);font-size:13px">Загрузка...</span>
+</div>
+
+<!-- Stars -->
+<div id="stars"></div>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-logo">
+    <svg width="26" height="26" viewBox="0 0 80 80" fill="none">
+      <ellipse cx="40" cy="60" rx="16" ry="17" fill="#94A3B8"/>
+      <rect x="33" y="46" width="14" height="5" rx="2.5" fill="#64748B"/>
+      <circle cx="40" cy="34" r="22" fill="#CBD5E1"/>
+      <ellipse cx="40" cy="34" rx="15" ry="13" fill="#0C1445"/>
+      <ellipse cx="40" cy="34" rx="14" ry="12" fill="#38BDF8" opacity=".8"/>
+      <circle cx="35" cy="32" r="2.5" fill="white" opacity=".9"/>
+      <circle cx="45" cy="32" r="2.5" fill="white" opacity=".9"/>
+      <path d="M37 38 Q40 41 43 38" stroke="white" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+      <line x1="40" y1="12" x2="40" y2="4" stroke="#64748B" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="40" cy="3" r="2.5" fill="#38BDF8"/>
+    </svg>
+    <div>
+      <div class="logo-title">TUNE, <span style="background:linear-gradient(135deg,#38BDF8,#6366F1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">TRACK</span> ME!</div>
+      <div class="logo-sub">Система задач</div>
+    </div>
+  </div>
+  <div class="live-clock" id="clock">--:--:--</div>
+</div>
+
+<div class="wrap" id="app" style="display:none">
+
+  <!-- Stats -->
+  <div class="stats" id="stats"></div>
+
+  <!-- Active timers -->
+  <div class="section">
+    <div class="section-title">⏱ Сейчас работают</div>
+    <div id="active-timers"></div>
+  </div>
+
+  <!-- Developer cards -->
+  <div class="section">
+    <div class="section-title">👨‍💻 Команда</div>
+    <div id="devs"></div>
+  </div>
+
+  <!-- Recent activity -->
+  <div class="section">
+    <div class="section-title">🕐 Последняя активность</div>
+    <div id="recent"></div>
+  </div>
+
+  <div class="refresh-note">Обновляется каждые 30 сек · <span id="last-update">—</span></div>
+</div>
+
+<script>
+// ── Config ────────────────────────────────────────────────
+const KEY = new URLSearchParams(location.search).get('key') || 'tune2026tg';
+const BASE = location.origin;
+let data = null;
+
+// ── Telegram SDK ──────────────────────────────────────────
+if (window.Telegram?.WebApp) {
+  Telegram.WebApp.ready();
+  Telegram.WebApp.expand();
+}
+
+// ── Stars ─────────────────────────────────────────────────
+const starsEl = document.getElementById('stars');
+for (let i = 0; i < 50; i++) {
+  const d = document.createElement('div');
+  d.className = 'star';
+  const size = i % 7 === 0 ? 2 : i % 3 === 0 ? 1.5 : 1;
+  d.style.cssText = `width:${size}px;height:${size}px;top:${((i*137.508)%100).toFixed(1)}%;left:${((i*97.318)%100).toFixed(1)}%;opacity:${(0.05+(i%8)*0.03).toFixed(2)}`;
+  starsEl.appendChild(d);
+}
+
+// ── Clock ─────────────────────────────────────────────────
+function tickClock() {
+  document.getElementById('clock').textContent = new Date().toLocaleTimeString('ru-RU');
+}
+tickClock(); setInterval(tickClock, 1000);
+
+// ── Helpers ───────────────────────────────────────────────
+const STATUS = {
+  todo:     { label:'К выполнению', color:'#64748B' },
+  progress: { label:'В работе',     color:'#F59E0B' },
+  review:   { label:'На проверке',  color:'#8B5CF6' },
+  done:     { label:'Выполнено',    color:'#34D399' },
+};
+function fmtTime(sec) {
+  if (!sec && sec !== 0) return '0:00:00';
+  const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+  return `${h}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+function liveSeconds(task) {
+  const base = task.timer_total || 0;
+  if (!task.timer_start) return base;
+  return base + Math.floor((Date.now() - new Date(task.timer_start).getTime()) / 1000);
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleString('ru-RU', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+function avatarHtml(u, size=40) {
+  const bg = u.color || '#38BDF8';
+  const inner = u.avatar_url
+    ? `<img src="${u.avatar_url}" onerror="this.style.display='none'">`
+    : (u.avatar_initials || '?');
+  return `<div class="avatar" style="background:${bg};width:${size}px;height:${size}px;box-shadow:0 0 12px ${bg}40">${inner}</div>`;
+}
+
+// ── Render ────────────────────────────────────────────────
+function render(d) {
+  // Stats
+  const sc = { total:'#38BDF8', progress:'#F59E0B', review:'#8B5CF6', done:'#34D399' };
+  const sl = { total:'Всего', progress:'В работе', review:'Проверка', done:'Готово' };
+  document.getElementById('stats').innerHTML = ['total','progress','review','done'].map(k => `
+    <div class="stat-card" style="border-color:${sc[k]}25">
+      <div class="stat-n" style="color:${sc[k]}">${d.stats[k]}</div>
+      <div class="stat-l">${sl[k]}</div>
+    </div>`).join('');
+
+  // Active timers
+  const active = d.developers.filter(dev => dev.active_task?.timer_start);
+  const atEl = document.getElementById('active-timers');
+  if (active.length === 0) {
+    atEl.innerHTML = '<div class="empty" style="padding:16px">Никто не работает прямо сейчас</div>';
+  } else {
+    atEl.innerHTML = active.map(dev => `
+      <div class="active-card">
+        ${avatarHtml(dev, 34)}
+        <div style="flex:1;min-width:0">
+          <div class="active-dev-name">${dev.full_name}</div>
+          <div class="active-task-title">${dev.active_task.title}</div>
+        </div>
+        <div class="timer-badge active-timer" data-start="${dev.active_task.timer_start}" data-total="${dev.active_task.timer_total||0}">
+          ${fmtTime(liveSeconds(dev.active_task))}
+        </div>
+        <div class="pulse-dot" style="margin-left:6px"></div>
+      </div>`).join('');
+  }
+
+  // Developer cards
+  document.getElementById('devs').innerHTML = d.developers.map(dev => {
+    const pct = dev.total_count > 0 ? Math.round(dev.done_count / dev.total_count * 100) : 0;
+    const t = dev.active_task;
+    const taskHtml = t ? `
+      <div class="current-task">
+        <div class="task-status-dot" style="background:${STATUS[t.status]?.color||'#64748B'}"></div>
+        <div style="flex:1;min-width:0">
+          <div class="task-title">${t.title}</div>
+          <div class="task-meta">${t.project_name||'Без проекта'} · ${STATUS[t.status]?.label||t.status}</div>
+          ${t.started_at ? `<div class="task-started">Начато: ${fmtDate(t.started_at)}</div>` : ''}
+          ${(t.timer_total>0||t.timer_start) ? `<div class="task-timer active-timer" data-start="${t.timer_start||''}" data-total="${t.timer_total||0}">⏱ ${fmtTime(liveSeconds(t))}</div>` : ''}
+        </div>
+      </div>` : '<div style="font-size:11px;color:rgba(255,255,255,0.18);margin-top:6px">Нет активных задач</div>';
+
+    return `
+      <div class="dev-card">
+        <div class="dev-header">
+          ${avatarHtml(dev, 40)}
+          <div class="dev-info">
+            <div class="dev-name">${dev.full_name}</div>
+            <div class="dev-counts">
+              <span style="color:#F59E0B">${dev.tasks.filter(t=>t.status==='progress').length} раб.</span>
+              <span style="color:#8B5CF6">${dev.tasks.filter(t=>t.status==='review').length} пров.</span>
+              <span style="color:#34D399">${dev.done_count} гот.</span>
+              <span style="color:rgba(255,255,255,0.25)">${dev.total_count} всего</span>
+            </div>
+          </div>
+          <div style="text-align:right;flex-shrink:0">
+            <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${dev.color||'#38BDF8'}">${pct}%</div>
+            <div style="font-size:9px;color:var(--muted)">прогресс</div>
+          </div>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,${dev.color||'#38BDF8'}99,${dev.color||'#38BDF8'})"></div>
+        </div>
+        ${taskHtml}
+      </div>`;
+  }).join('');
+
+  // Recent
+  document.getElementById('recent').innerHTML = d.recent.map(t => `
+    <div class="recent-item">
+      <div class="ri-dot" style="background:${STATUS[t.status]?.color||'#64748B'};box-shadow:0 0 5px ${STATUS[t.status]?.color||'#64748B'}70"></div>
+      <div class="ri-content">
+        <div class="ri-title">${t.title}</div>
+        <div class="ri-meta">${t.dev_name||'—'} · ${t.project_name||'Без проекта'}</div>
+      </div>
+      <div>
+        <div class="ri-badge" style="color:${STATUS[t.status]?.color||'#64748B'};background:${STATUS[t.status]?.color||'#64748B'}18">${STATUS[t.status]?.label||t.status}</div>
+        ${(t.timer_total>0||t.timer_start)?`<div style="font-family:var(--mono);font-size:9px;color:rgba(56,189,248,0.5);text-align:right;margin-top:3px">${fmtTime(liveSeconds(t))}</div>`:''}
+      </div>
+    </div>`).join('');
+
+  document.getElementById('last-update').textContent = new Date().toLocaleTimeString('ru-RU');
+}
+
+// ── Live timer ticks ──────────────────────────────────────
+function tickTimers() {
+  document.querySelectorAll('.active-timer').forEach(el => {
+    const start = el.dataset.start;
+    const total = parseInt(el.dataset.total) || 0;
+    if (!start) return;
+    const elapsed = Math.floor((Date.now() - new Date(start).getTime()) / 1000);
+    const prefix = el.classList.contains('task-timer') ? '⏱ ' : '';
+    el.textContent = prefix + fmtTime(total + elapsed);
+  });
+}
+setInterval(tickTimers, 1000);
+
+// ── Fetch & refresh ───────────────────────────────────────
+async function load() {
+  try {
+    const r = await fetch(`${BASE}/api/tg/dashboard?key=${KEY}`, {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    if (!r.ok) throw new Error(r.status);
+    data = await r.json();
+    render(data);
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  } catch(e) {
+    document.getElementById('loading').innerHTML =
+      `<div style="color:#F87171;font-size:13px;text-align:center;padding:24px">Ошибка загрузки<br><small style="color:rgba(255,255,255,0.3)">${e.message}</small></div>`;
+  }
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>

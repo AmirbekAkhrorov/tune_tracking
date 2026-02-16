@@ -1,0 +1,28 @@
+{
+  "name": "tune-tracker",
+  "version": "1.0.0",
+  "description": "TUNE Task Tracker - Live task tracking platform",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"node server/index.js\" \"npm --prefix client run dev\"",
+    "start": "node server/index.js",
+    "build": "npm --prefix client run build",
+    "postinstall": "npm --prefix client install"
+  },
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "cors": "^2.8.5",
+    "dotenv": "^17.3.1",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
+    "sql.js": "^1.12.0",
+    "telegraf": "^4.16.3"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
