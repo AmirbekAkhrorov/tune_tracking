@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../db');
 const { authenticateToken, requireAdmin } = require('../auth');
-const { notify } = require('../notifier');
+
 
 const router = express.Router();
 router.use(authenticateToken);
@@ -126,18 +126,6 @@ router.put('/:id', (req, res) => {
     WHERE t.id = ?
   `).get(req.params.id);
 
-  // ── Notifications ──────────────────────────────────────
-  const newStatus = updated.status;
-  const devName   = updated.assignee_name || 'Разработчик';
-  const taskTitle = updated.title;
-  if (req.user.role !== 'admin') {
-    if (newStatus === 'progress') {
-      notify(`▶️ <b>${devName}</b> начал задачу:\n<i>${taskTitle}</i>`);
-    } else if (newStatus === 'review') {
-      notify(`✅ <b>${devName}</b> завершил задачу:\n<i>${taskTitle}</i>\n\nЖдёт проверки!`);
-    }
-  }
-
   res.json(updated);
 });
 
@@ -158,7 +146,6 @@ router.post('/:id/timer/start', (req, res) => {
     FROM tasks t LEFT JOIN users u ON t.assigned_to = u.id LEFT JOIN projects p ON t.project_id = p.id
     WHERE t.id = ?`).get(req.params.id);
 
-  notify(`⏱ <b>${updated.assignee_name||'Разработчик'}</b> запустил таймер:\n<i>${updated.title}</i>`);
   res.json(updated);
 });
 

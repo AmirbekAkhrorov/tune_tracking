@@ -18,7 +18,17 @@ export function AuthProvider({ children }) {
     const t = localStorage.getItem('token')
     if (!t) return
     fetch('/api/auth/me', { headers: { Authorization: `Bearer ${t}` } })
-      .then(r => r.ok ? r.json() : null)
+      .then(r => {
+        if (!r.ok) {
+          // Token expired or invalid — clear it so user is redirected to login
+          localStorage.removeItem('token')
+          localStorage.removeItem('user')
+          setToken(null)
+          setUser(null)
+          return null
+        }
+        return r.json()
+      })
       .then(data => {
         if (data) {
           localStorage.setItem('user', JSON.stringify(data))

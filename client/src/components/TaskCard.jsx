@@ -236,6 +236,25 @@ export default function TaskCard({ task, currentStatus, onStatusChange, onDelete
               </button>
             ))}
           </div>
+          {currentStatus === 'progress' && (
+            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: '6px', marginBottom: '8px' }}>
+              {!isRunning ? (
+                <button
+                  onClick={() => onTimerStart(task.id)}
+                  style={{ flex: 1, padding: '6px 0', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.3)', background: 'rgba(56,189,248,0.08)', color: '#38BDF8', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '11px', fontWeight: '700' }}
+                >
+                  {baseTotal > 0 ? '⏯ Продолжить таймер' : '⏱ Старт таймера'}
+                </button>
+              ) : (
+                <button
+                  onClick={() => onTimerPause(task.id)}
+                  style={{ flex: 1, padding: '6px 0', borderRadius: '8px', border: '1px solid rgba(245,158,11,0.35)', background: 'rgba(245,158,11,0.1)', color: '#F59E0B', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif", fontSize: '11px', fontWeight: '700' }}
+                >
+                  ⏸ Пауза
+                </button>
+              )}
+            </div>
+          )}
           <div style={{ display: 'flex', gap: '6px' }}>
             <button
               onClick={() => { setShowActions(false); onEdit(task) }}

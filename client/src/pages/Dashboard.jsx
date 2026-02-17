@@ -46,10 +46,10 @@ export default function Dashboard() {
         tasksRes.json(), projectsRes.json(), usersRes.json(), statsRes.json(),
       ])
 
-      setTasks(tasksData)
-      setProjects(projectsData)
-      setUsers(usersData)
-      setStats(statsData)
+      setTasks(Array.isArray(tasksData) ? tasksData : [])
+      setProjects(Array.isArray(projectsData) ? projectsData : [])
+      setUsers(Array.isArray(usersData) ? usersData : [])
+      setStats(statsData && !statsData.error ? statsData : null)
     } catch (err) {
       console.error('Ошибка загрузки данных:', err)
     } finally {
