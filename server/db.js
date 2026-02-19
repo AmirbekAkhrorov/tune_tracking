@@ -90,7 +90,23 @@ class Db {
   }
 
   async _seedIfEmpty() {
-    // No seed data — real company data will be added via the app
+    // Ensure all known developers exist — safe to run every startup (INSERT OR IGNORE)
+    const bcrypt = require('bcrypt');
+    const hash = await bcrypt.hash('tune2024', 10);
+
+    const devs = [
+      { id: 6, username: 'sayfiddinov', full_name: 'С.Шахбоз',   initials: 'С.Ш', color: '#EC4899', avatar: '/avatars/user_6.jpg' },
+      { id: 7, username: 'togaev',      full_name: 'Т.Элшодбек',  initials: 'Т.Э', color: '#EF4444', avatar: '/avatars/user_7.jpg' },
+    ];
+
+    for (const d of devs) {
+      this._sql.run(
+        `INSERT OR IGNORE INTO users (id, username, password_hash, full_name, role, avatar_initials, job_title, color, avatar_url)
+         VALUES (?, ?, ?, ?, 'developer', ?, 'Разработчик', ?, ?)`,
+        [d.id, d.username, hash, d.full_name, d.initials, d.color, d.avatar]
+      );
+    }
+    this._save();
   }
 
   // ─── Public better-sqlite3-compatible API ──────────────────────────────────
